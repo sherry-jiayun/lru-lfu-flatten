@@ -60,9 +60,16 @@ class flatten(object):
 	def __init__(self, list_str):
 		super(flatten, self).__init__()
 		self.list_str = list_str
+		self.list_str = self.list_str.replace('[',',')
+		self.list_str = self.list_str.replace(']',',')
+		self.flatten_list = [e for e in self.list_str.split(',') if len(e) > 0]
+		self.head_point = 0
+		self.length = len(self.flatten_list)
 		
 	def hasNext(self):
-		print ("Has Next function")
+		ans = self.flatten_list[self.head_point] if self.head_point < self.length else None
+		self.head_point += 1
+		return ans
 
 def lru_command():
 	'''
@@ -94,7 +101,11 @@ def flatten_command():
 	'''
 	var = input("Please enter the list:\n")
 	f = flatten(var)
-	f.hasNext()
+	value = f.hasNext()
+	while value:
+		print (value,' ',end = '')
+		value = f.hasNext()
+	print ()
 
 def lfu_command():
 	'''
