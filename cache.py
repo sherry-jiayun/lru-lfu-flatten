@@ -55,9 +55,14 @@ class cache_lfu(object):
 		print ("Start with function with start str:",start)
 		return
 
-def flatten(n):
-	print ("get input:",n)
-	return
+class flatten(object):
+	"""docstring for flatten"""
+	def __init__(self, list_str):
+		super(flatten, self).__init__()
+		self.list_str = list_str
+		
+	def hasNext(self):
+		print ("Has Next function")
 
 def lru_command():
 	'''
@@ -85,9 +90,11 @@ def lru_command():
 def flatten_command():
 	'''
 	e.g.[1,[4,[6]]]
+	use stack
 	'''
 	var = input("Please enter the list:\n")
-	flatten(var)
+	f = flatten(var)
+	f.hasNext()
 
 def lfu_command():
 	'''
