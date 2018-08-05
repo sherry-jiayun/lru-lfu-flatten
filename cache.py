@@ -105,17 +105,38 @@ class cache_lfu(object):
 class tire(object):
 	def __init__(self):
 		super(tire,self).__init__()
+		self.head = None
+		self.tail = None
+		self.tmpPointer = None
 
-	def insert(self,key,value,index):
-		print("Insert function with key:",key,"value:",value,"index:",index)
+	def insert(self,key,value):
+		print("Insert function with key:",key,"value:",value)
+		cn = cache_node(key,value)
+		if not self.head: self.head = self.tail = cn
+		else:
+			self.tail.next = cn
+			self.tail = self.tail
 		return
 
 	def search(self,key):
-		print("Search function with key:",key)
+		self.tmpPointer = self.head
+		while self.tmpPointer:
+			if self.tmpPointer.key == key:
+				print ("Found! Key:",key,"Value:",self.tmpPointer.val)
+				return
+			else: self.tmpPointer = self.tmpPointer.next
+		print ("Not Find! Invalid key.")
 		return
 
 	def startwith(self,startstr):
-		print("Startwith function search startstr:",startstr)
+		self.tmpPointer = self.head
+		num = 0
+		while self.tmpPointer:
+			if self.tmpPointer.key.startswith(startstr):
+				print ("Found! Key:",self.tmpPointer.key,"Value:",self.tmpPointer.val)
+				num += 1
+			self.tmpPointer = self.tmpPointer.next
+		if num == 0: print("Not Found")
 		return
 
 class flatten(object):
@@ -187,13 +208,13 @@ def tire_command():
 	search:2
 	startwith:s
 	'''
-	var = input("Please enter command command:parameter0 parameter1 parameter2:\ne.g.[insert|search|startwith|exit]:[key|startstr] [value [order]]\n")
+	var = input("Please enter command command:parameter0 parameter1 parameter2:\ne.g.[insert|search|startwith|exit]:[key|startstr] [value]\n")
 	t = tire()
 	while True:
 		if var == 'exit': break
 		varlist = var.split(':')
 		if len(varlist) > 1:
-			if varlist[0] == 'insert' and len(varlist) == 2 and len(varlist[1].split()) == 3: t.insert(varlist[1].split()[0],varlist[1].split()[1],varlist[1].split()[2])
+			if varlist[0] == 'insert' and len(varlist) == 2 and len(varlist[1].split()) == 2: t.insert(varlist[1].split()[0],varlist[1].split()[1])
 			if varlist[0] == 'search' and len(varlist) == 2: t.search(varlist[1])
 			if varlist[0] == 'startwith' and len(varlist) == 2: t.startwith(varlist[1])
 		else: print ("Invalid command, try again!")
