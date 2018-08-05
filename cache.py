@@ -115,27 +115,44 @@ class tire(object):
 		if not self.head: self.head = self.tail = cn
 		else:
 			self.tail.next = cn
-			self.tail = self.tail
+			cn.pre = self.tail
+			self.tail = self.tail.next
 		return
 
 	def search(self,key):
-		self.tmpPointer = self.head
-		while self.tmpPointer:
-			if self.tmpPointer.key == key:
-				print ("Found! Key:",key,"Value:",self.tmpPointer.val)
+		if not self.tmpPointer: self.tmpPointer = self.head
+		tmpPointer = self.tmpPointer
+		while tmpPointer:
+			if tmpPointer.key == key: 
+				print ("Found! Key:",key,"Value:",tmpPointer.val)
+				self.tmpPointer = tmpPointer
 				return
-			else: self.tmpPointer = self.tmpPointer.next
+			else: tmpPointer = tmpPointer.next
+		tmpPointer = self.tmpPointer
+		while tmpPointer:
+			if tmpPointer.key == key: 
+				print ("Found! Key:",key,"Value:",tmpPointer.val)
+				self.tmpPointer = tmpPointer
+				return
+			else: tmpPointer = tmpPointer.pre
 		print ("Not Find! Invalid key.")
 		return
 
 	def startwith(self,startstr):
-		self.tmpPointer = self.head
+		if not self.tmpPointer: self.tmpPointer = self.head
 		num = 0
-		while self.tmpPointer:
-			if self.tmpPointer.key.startswith(startstr):
-				print ("Found! Key:",self.tmpPointer.key,"Value:",self.tmpPointer.val)
+		tmpPointer = self.tmpPointer
+		while tmpPointer:
+			if tmpPointer.key.startswith(startstr): 
+				print ("Found! Key:",tmpPointer.key,"Value:",tmpPointer.val)
 				num += 1
-			self.tmpPointer = self.tmpPointer.next
+			tmpPointer = tmpPointer.next
+		tmpPointer = self.tmpPointer.pre
+		while tmpPointer:
+			if tmpPointer.key.startswith(startstr): 
+				print ("Found! Key:",tmpPointer.key,"Value:",tmpPointer.val)
+				num += 1
+			tmpPointer = tmpPointer.pre
 		if num == 0: print("Not Found")
 		return
 
