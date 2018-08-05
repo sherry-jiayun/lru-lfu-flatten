@@ -9,6 +9,7 @@ class cache_node(object):
 		self.val = val
 		self.next = None
 		self.pre =None
+		self.frequence = 1
 
 class cache_lru(object):
 	"""docstring for cache_lru"""
@@ -53,7 +54,6 @@ class cache_lru(object):
 		else:
 			self.order_head.pre = cn
 			cn.next = self.order_head
-			self.order_head.pre = cn
 			self.order_head = cn
 		self.cache[key] = cn
 		return 
@@ -85,21 +85,98 @@ class cache_lru(object):
 		if not new_tail: 
 			self.order_head = None
 		self.order_tail = new_tail
-		return
-
+		return	
 
 class cache_lfu(object):
 	"""docstring for cache_lfu"""
 	def __init__(self, capacity):
 		super(cache_lfu, self).__init__()
 		self.capacity = capacity
+		self.cache = dict()
+		self.order_head = None
+		self.order_tail = None
 
 	def get(self,key):
-		print ("Get function with key:",key)
+		# key not exit
+		cn = self.cache.get(key,None)
+		if not cn: print("Key not exist.")
+		else: 
+			print ("Key:",key,"Value:",cn.val)
+			self.__update_node__(key)
+			self.__print_order__()
 		return 
 
 	def put(self,key,value):
-		print ("Put function with key:",key,"value:",value)
+		# key not exist 
+		if key not in self.cache.keys(): 
+			if len(self.cache) == self.capacity: self.__remove_node__()
+			if len(self.cache) < self.capacity: self.__add_node__(key,value) # capacity = 0
+		else:
+			cn = self.cache.get(key)
+			cn.val = value
+			self.__update_node__(key)
+		self.__print_order__()
+		return
+
+	def __print_order__(self):
+		tmp_head = self.order_head
+		while tmp_head:
+			print (tmp_head.key,":",tmp_head.val,"frequence:",tmp_head.frequence)
+			tmp_head = tmp_head.next
+		return
+
+	def __print_order_reverse__(self):
+		tmp_tail = self.order_tail
+		while tmp_tail:
+			print (tmp_tail.key,":",tmp_tail.val,"frequence:",tmp_tail.frequence)
+			tmp_tail = tmp_tail.pre
+		return
+
+	def __add_node__(self,key,value):
+		cn = cache_node(key,value) # new cache node 
+		self.cache[key] = cn # add to cache
+		if not self.order_head and not self.order_tail: self.order_head = self.order_tail = cn
+		else:
+			position = self.order_head
+			while position and position.frequence > cn.frequence: position = position.next
+			if position == self.order_head:
+				self.order_head.pre = cn
+				cn.next = self.order_head
+				self.order_head = cn
+			elif not position: # tail
+				self.order_tail.next = cn
+				cn.pre = self.order_tail
+				self.order_tail = cn
+			else:
+				position.pre.next = cn
+				cn.pre = position.pre
+				cn.next = position
+				position.pre = cn
+		return
+
+	def __remove_node__(self):
+		cn = self.order_tail
+		if self.order_tail.pre: 
+			self.order_tail.pre.next = None
+		self.order_tail = self.order_tail.pre
+		if self.order_head == cn: self.order_head = None # 1 capacity
+		self.cache.pop(cn.key, None)
+		return
+
+	def __update_node__(self,key):
+		cn = self.cache.get(key)
+		cn.frequence += 1
+		while cn.pre and cn.frequence >= cn.pre.frequence:
+			cn_pre = cn.pre
+			cn_next = cn.next
+			cn.pre = cn.pre.pre
+			if cn.pre: cn.pre.next = cn
+			cn.next = cn_pre
+			cn_pre.pre = cn
+			cn_pre.next = cn_next
+			if cn_next: cn_next.pre = cn_pre
+			else: self.order_tail = cn_pre
+		if not cn.pre and not self.order_head == cn: self.order_head = cn # update tail
 		return
 
 class tire(object):
