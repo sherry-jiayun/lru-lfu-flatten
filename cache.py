@@ -3,18 +3,40 @@ import sys
 # do boch least recently used cache
 # and least frequence used cache 
 
+class cache_node(object):
+	def __init__(self,key,val):
+		self.key = key
+		self.val = val
+		self.next = None
+		self.pre =None
+
 class cache_lru(object):
 	"""docstring for cache_lru"""
 	def __init__(self, capacity):
 		super(cache_lru, self).__init__()
 		self.capacity = capacity
+		self.cache = dict()
+		self.order_head = None
+		self.order_tail = None
 
 	def get(self,key):
-		print ("Get function with key:",key)
+		value = self.cache.get(key,None)
+		if not value: print ("Key not found.")
+		else: 
+			print ("Key:",key,"Value:",value.val)
+			self.__update_node__(key)
+		self.__print_order__()
 		return 
 
 	def put(self,key,value):
-		print ("Put function with key:",key,"value:",value)
+		cn = self.cache.get(key,None)
+		if not cn:
+			if len(self.cache) == self.capacity: self.__remove_node__()
+			self.__add_node__(key,value)
+		else:
+			cn.val = value
+			self.__update_node__(key)
+		self.__print_order__()
 		return
 
 	def insert(self,key,value,order):
@@ -28,6 +50,58 @@ class cache_lru(object):
 	def startwith(self,start):
 		print ("Start with function with start str:",start)
 		return
+
+	def __print_order__(self):
+		print (len(self.cache))
+		tmp_head = self.order_head
+		while tmp_head:
+			print (tmp_head.key,":",tmp_head.val)
+			tmp_head = tmp_head.next
+		return
+
+	def __add_node__(self,key,value):
+		cn = cache_node(key,value)
+		if not self.order_head and not self.order_tail:
+			self.order_head = self.order_tail = cn
+		else:
+			self.order_head.pre = cn
+			cn.next = self.order_head
+			self.order_head.pre = cn
+			self.order_head = cn
+		self.cache[key] = cn
+		return 
+
+	def __update_node__(self,key):
+		tmp_head = self.cache.get(key)
+		if not tmp_head.pre and not tmp_head.next: return
+		if tmp_head.pre and tmp_head.next: # in the middle
+			tmp_head.pre.next = tmp_head.next
+			tmp_head.next.pre = tmp_head.pre
+		elif not tmp_head.next: # tail
+			self.order_tail = tmp_head.pre
+			self.order_tail.next = None
+		if tmp_head.pre: # head 
+			tmp_head.next = self.order_head
+			self.order_head.pre = tmp_head
+			self.order_head = tmp_head
+			tmp_head.pre = None
+		else: # already head 
+			print("Here")
+			return
+		return
+
+	def __remove_node__(self):
+		print ("current tail:",self.order_tail.key,self.order_tail.val)
+		new_tail = self.order_tail.pre
+		if new_tail:
+			new_tail.next = None
+		self.order_tail.pre = None
+		self.cache.pop(self.order_tail.key,None)
+		if not new_tail: 
+			self.order_head = None
+		self.order_tail = new_tail
+		return
+
 
 class cache_lfu(object):
 	"""docstring for cache_lfu"""
@@ -81,7 +155,7 @@ def lru_command():
 	startwith:s
 	'''
 	var = input("Please enter command command:parameter0 parameter1 parameter2:\ne.g.[get|put|insert|search|startwith|exit]:[key|value|startstr] [value [order]]\n")
-	lru_cache = cache_lru(2)
+	lru_cache = cache_lru(10)
 	while True:
 		if var == 'exit': break
 		varlist = var.split(':')
