@@ -93,8 +93,8 @@ class cache_lfu(object):
 		super(cache_lfu, self).__init__()
 		self.capacity = capacity
 		self.cache = dict()
-		self.order_head = None
-		self.order_tail = None
+		self.freq = dict() # freq: [head,tail]
+		self.min_freq = 1 
 
 	def get(self,key):
 		# key not exit
@@ -119,64 +119,76 @@ class cache_lfu(object):
 		return
 
 	def __print_order__(self):
-		tmp_head = self.order_head
-		while tmp_head:
-			print (tmp_head.key,":",tmp_head.val,"frequence:",tmp_head.frequence)
-			tmp_head = tmp_head.next
-		return
-
-	def __print_order_reverse__(self):
-		tmp_tail = self.order_tail
-		while tmp_tail:
-			print (tmp_tail.key,":",tmp_tail.val,"frequence:",tmp_tail.frequence)
-			tmp_tail = tmp_tail.pre
+		for freq in self.freq.keys():
+			print ("frequence:",freq)
+			[freq_head,_] = self.freq[freq]
+			head_tmp = freq_head
+			while head_tmp:
+				print ("  key:",head_tmp.key,"value:",head_tmp.val)
+				head_tmp = head_tmp.next
 		return
 
 	def __add_node__(self,key,value):
 		cn = cache_node(key,value) # new cache node 
 		self.cache[key] = cn # add to cache
-		if not self.order_head and not self.order_tail: self.order_head = self.order_tail = cn
+		cn_freq = cn.frequence
+		[freq_head,freq_tail] = self.freq.get(cn_freq,[None,None])
+		if not freq_head and not freq_tail: 
+			freq_head = freq_tail = cn
+			self.freq[cn_freq] = [freq_head,freq_tail]
 		else:
-			position = self.order_head
-			while position and position.frequence > cn.frequence: position = position.next
-			if position == self.order_head:
-				self.order_head.pre = cn
-				cn.next = self.order_head
-				self.order_head = cn
-			elif not position: # tail
-				self.order_tail.next = cn
-				cn.pre = self.order_tail
-				self.order_tail = cn
-			else:
-				position.pre.next = cn
-				cn.pre = position.pre
-				cn.next = position
-				position.pre = cn
+			freq_head.pre = cn
+			cn.next = freq_head
+			freq_head = cn
+			self.freq[cn_freq] = [freq_head,freq_tail]
+		self.min_freq = 1
 		return
 
 	def __remove_node__(self):
-		cn = self.order_tail
-		if self.order_tail.pre: 
-			self.order_tail.pre.next = None
-		self.order_tail = self.order_tail.pre
-		if self.order_head == cn: self.order_head = None # 1 capacity
-		self.cache.pop(cn.key, None)
+		if not self.min_freq in self.freq.keys(): return
+		[freq_head,freq_tail] = self.freq[self.min_freq]
+		if not freq_tail.pre: # only one element
+			self.cache.pop(freq_tail.key, None) # pop from cache
+			self.freq.pop(self.min_freq,None) # pop from freq dict
+		else:
+			cn = freq_tail
+			freq_tail.pre.next = None
+			freq_tail = freq_tail.pre
+			self.cache.pop(cn.key,None)
+			self.freq[self.min_freq] = [freq_head,freq_tail]
+		self.min_freq = 1
 		return
 
 	def __update_node__(self,key):
-		cn = self.cache.get(key)
+		cn = self.cache[key]
+		freq = cn.frequence
 		cn.frequence += 1
-		while cn.pre and cn.frequence >= cn.pre.frequence:
-			cn_pre = cn.pre
-			cn_next = cn.next
-			cn.pre = cn.pre.pre
-			if cn.pre: cn.pre.next = cn
-			cn.next = cn_pre
-			cn_pre.pre = cn
-			cn_pre.next = cn_next
-			if cn_next: cn_next.pre = cn_pre
-			else: self.order_tail = cn_pre
-		if not cn.pre and not self.order_head == cn: self.order_head = cn # update tail
+		if not cn.pre and not cn.next: # removce whole freq 
+			self.freq.pop(freq,None)
+			if self.min_freq == freq: self.min_freq = freq + 1
+		else:
+			[freq_head, freq_tail] = self.freq[freq]
+			if cn == freq_head: 
+				freq_head = freq_head.next
+				freq_head.pre = None
+			elif cn == freq_tail: 
+				freq_tail = freq_tail.pre
+				freq_tail.next = None
+			else:
+				cn.pre.next = cn.next
+				cn.next.pre = cn.pre
+			self.freq[freq] = [freq_head,freq_tail]
+		cn.next = cn.pre = None
+		freq += 1
+		if freq not in self.freq.keys():
+			self.freq[freq] = [cn,cn]
+		else:
+			[freq_head,freq_tail] = self.freq[freq]
+			freq_head.pre = cn
+			cn.next = freq_head
+			freq_head = cn
+			self.freq[freq] = [freq_head,freq_tail]
+		print("TODU: update node.")
 		return
 
 class tire(object):
